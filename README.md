@@ -75,7 +75,7 @@ The docker images for each of the micro-services need to be built and then pushe
 
 ## Deploy the application
 
-There are two different ways to deploy the three micro-services to a Kubernetes cluster:
+There are two different ways to deploy the three micro-services to a Kubernetes cluster::::
 
 - Using [Helm](https://helm.sh/) to provide values for templated charts (recommended)
 - Or, updating yaml files with the right values and then running  `kubectl create`
