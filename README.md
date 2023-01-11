@@ -20,7 +20,7 @@ Follow the below steps to create resources used in this demo. You will create a 
 
 To manually deploy the demo, follow the below steps.
 
-### Clone the demo to your laptop
+##### Clone the demo to your laptop
 
 Clone the demo repository:
 
@@ -29,7 +29,7 @@ git clone https://github.ibm.com/mcmp-demo/jpetstore-kubernetes.git
 cd jpetstore-kubernetes
 ```
 
-#### Code structure
+###### Code structure
 
 | Folder | Description |
 | ---- | ----------- |
@@ -37,7 +37,7 @@ cd jpetstore-kubernetes
 |[**helm**](/helm)| Helm charts for templated Kubernetes deployments |
 |[**pet-images**](/pet-images)| Pet images (which can be used for the demo) |
 
-### Create Kubernetes secrets
+##### Create Kubernetes secrets
 
 Next, use the `kubectl` command to allow your Kubernetes cluster access to the secrets you just created.
 
