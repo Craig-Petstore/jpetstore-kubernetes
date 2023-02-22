@@ -8,9 +8,10 @@ from common_utils import *
 import build
 from testpetstore import Tester
 from deploy import Deploy
-import datetime
+from datetime import datetime
 import uuid
-
+from secure import Secure
+import deployMonitoring
 STATE_FILENAME = "jpetstore-pipeline-status.json"
 
 def parser( validate_parameters = False ) -> dict:
@@ -72,7 +73,7 @@ def update_completed_order_status( tenantUrl:str, userID:str, userApiKey:str, or
     ##If status file is not json valid create a new one and rename the existing one to .old
 
     tenantUrl = sanitazeTenantUrl(tenantUrl, urlType='api')
-    endpointUrl = f"{tenantUrl}/api/fulfillment/prov_posthook_response"
+    endpointUrl = f"{tenantUrl}api/fulfillment/prov_posthook_response"
     headers = {
         "username": userID,
         "apikey": userApiKey
@@ -85,7 +86,7 @@ def update_completed_order_status( tenantUrl:str, userID:str, userApiKey:str, or
         "serviceFulfillmentId": fulfillmentId,
         "status":"ProvisionCompleted",
         "version":""
-        }
+    }
 
     response, operationSuccess, errorMessage = make_web_request( url=endpointUrl, headers=headers, payload=payload, requestMethod=requests.post )
     if not operationSuccess:
@@ -147,7 +148,10 @@ def petstore_pipeline(  params: dict  ):
         publishToTenant=True
      )
 
-    #secure_Petstore()
+    secure_Petstore(tenantUrl=params["tenant_url"], secureToken=params["secure_token"])
+    successfulOperation = deployMonitoring.deploy_petstore_monitoring()
+    if not successfulOperation:
+        print("Warning: Unable to install monitoring")
 
 
 def configure_pipeline_status( newValues: dict ):
@@ -222,7 +226,7 @@ def read_state_file(fileName: str):
 def build_petstore( dockerFileDirectory=".", dockerUser="", dockerPassword="", fullImageName="", tenantUrl="", buildToken="", publishToTenant=False, pushToDockerRepo=False, technicalServiceName="RT_petstore_on_aks_jenkins" ):
 
     petstoreBuild = build.Builder( buildId=uuid.uuid4().__str__(), tecnicalServiceName=technicalServiceName )
-    startTime = datetime.datetime.now()
+    startTime = datetime.now()
     petstoreBuild.create_docker_image( dockerFileDirectory=dockerFileDirectory, imageName=fullImageName )
     
     if pushToDockerRepo:
@@ -236,7 +240,7 @@ def build_petstore( dockerFileDirectory=".", dockerUser="", dockerPassword="", f
         tenantUrl = sanitazeTenantUrl( tenantUrl )
         petstoreBuild.post_data_into_tenant(buildToken=buildToken, tenantUrl=tenantUrl)
 
-    duration =   datetime.datetime.now() - startTime
+    duration =   datetime.now() - startTime
     SecondsDuration = duration.total_seconds()
     
 
@@ -274,8 +278,13 @@ def deploy_Petstore( tenantUserID,  tenantUserApiKey, tenantApiURL,  orderNumber
     if deployment.status.lower() == "failure":
         exit(1)
 
-def secure_Petstore( ):
-    pass
+def secure_Petstore( tenantUrl, secureToken ):
+    secure = Secure()
+    publishSLSuccessful = secure.publish_secure_licenses( tenantUrl, secureToken )
+    publishVSSuccessful = secure.publish_vulnerability_scan( tenantUrl, secureToken )
+    if publishSLSuccessful and publishVSSuccessful:
+        return True
+    return False
 
 def make_web_request(url="", payload={}, headers={}, requestMethod=requests.get, logToIBM=False ):
     
